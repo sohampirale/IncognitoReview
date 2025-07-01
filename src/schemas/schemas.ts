@@ -14,6 +14,7 @@ import {z} from "zod"
  */
 
 /**
+ * getMe
  * signup
  * login
  * createTopic
@@ -57,6 +58,11 @@ const objectIdSchema = z
     .string()
     .regex(/^[0-9a-fA-F]{24}$/,"Invalid ObjectId")
     .transform((id)=>new mongoose.Types.ObjectId(id))
+
+// const getMeSchema=z.object({
+
+// })
+
 
 const signUpSchema = z.object({
     username:usernameSchema,

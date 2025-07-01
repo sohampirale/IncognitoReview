@@ -3,7 +3,7 @@ import DBError from "@/utils/DBError";
 import bcrypt from "bcrypt"
 
 interface IUser extends Document{
-    name:string;
+    name?:string;
     email:string;
     username:string;
     password:string;
@@ -17,13 +17,6 @@ interface IUser extends Document{
 }
 
 const userSchema :Schema<IUser>= new Schema({
-    name:{
-        type:String,
-        trim:true,
-        required:true,
-        unique:true,
-        lowercase:true
-    },
     email:{
         type:String,
         lowercase:true,
@@ -33,8 +26,10 @@ const userSchema :Schema<IUser>= new Schema({
     },
     username:{
         type:String,
+        trim:true,
+        lowercase:true,
         required:true,
-        unique:true
+        unique:true,
     },
     password:{
         type:String,
@@ -49,7 +44,8 @@ const userSchema :Schema<IUser>= new Schema({
         ref:"Feedback"
     }],
     verifyCode:{
-        type:String
+        type:String,
+        default:null
     },
     verifyCodeExpiry:{
         type:Date,
@@ -71,7 +67,11 @@ userSchema.pre("save",async function(next){
     next();
 })
 
-const User = mongoose.model("User",userSchema);
+userSchema.methods.comparePassword=async function(password:string){
+    return await bcrypt.compare(password,this.password)
+}
+
+const User =(mongoose.models.User) || (mongoose.model<IUser>("User",userSchema));
 
 interface ITopic extends Document{
     owner:Types.ObjectId;
@@ -104,7 +104,7 @@ const topicSchema :Schema<ITopic>= new Schema({
     timestamps:true
 })
 
-const Topic = mongoose.model("Topic",topicSchema);
+const Topic = (mongoose.models.Topic) || (mongoose.model("Topic",topicSchema));
 
 interface IFeedback extends Document{
     owner?:Types.ObjectId | null;
@@ -133,7 +133,6 @@ const feedbackSchema:Schema<IFeedback> = new Schema({
     timestamps:true
 })
 
-
 feedbackSchema.pre("save",function(next){
     const feedback = this;
     if(!feedback.owner && !feedback.topic) {
@@ -143,10 +142,10 @@ feedbackSchema.pre("save",function(next){
     next();
 })
 
-const Feedback =  mongoose.model("Feedback",feedbackSchema);
-
+const Feedback = (mongoose.models.Feedback) || (mongoose.model("Feedback",feedbackSchema));
 
 export {
+    type IUser,
     User,
     Feedback,
     Topic

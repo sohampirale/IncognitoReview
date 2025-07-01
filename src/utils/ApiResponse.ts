@@ -5,12 +5,12 @@ export interface IApiResponse{
     error?:any
 }
 
-
 export class ApiResponse implements IApiResponse{
     success:boolean;
     message:string;
     data?:any;
     error?:any;
+    isVerified?: boolean;
 
     constructor(success:boolean,message:string,data?:any,error?:any){
         this.success=success;

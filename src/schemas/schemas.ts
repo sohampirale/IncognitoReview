@@ -18,8 +18,10 @@ import {z} from "zod"
  * signup
  * login
  * createTopic
+ * getAllFeedbacksOfTopic
  * giveFeedback
- * giveFeedback
+ * toggleTopicAllowingFeedbacks
+ * updateTopicTitle
  * deleteTopic
  * deleteFeedback
  * verifyEmail
@@ -59,6 +61,18 @@ const objectIdSchema = z
     .regex(/^[0-9a-fA-F]{24}$/,"Invalid ObjectId")
     .transform((id)=>new mongoose.Types.ObjectId(id))
 
+const OTPSchema= z
+    .string()
+    .trim()
+    .transform((val) => val.replace(/\s+/g, ""))
+    .refine((val) => val.length === 6, {
+        message: "OTP must be exactly 6 characters",
+    });
+
+const toggleAcceptingFeedbacksSchema=z
+    .boolean()
+
+
 // const getMeSchema=z.object({
 
 // })
@@ -84,17 +98,34 @@ const loginSchema2 = z.object({
 })
 
 const createTopicSchema = z.object({
-    title:titleSchema,
+    title:titleSchema
+})
+
+const getAllFeedbacksOfTopicSchema = z.object({
+    topicId:objectIdSchema,
     userId:objectIdSchema
+})
+
+const toggleTopicAllowingFeedbacksSchema=z.object({
+    topicId:objectIdSchema,
+    allowingFeedbacks:z.boolean()
 })
 
 const giveFeeedbackSchema= z
     .object({
         note:noteSchema,
-        topicId:objectIdSchema.optional(),
-        userId:objectIdSchema.optional()
+        userId:objectIdSchema
     })
-    .refine((data)=>data.topicId||data.userId,"Atleast topicId or userId is necessary")
+
+const giveFeedbackInTopicSchema = z.object({
+    topicId:objectIdSchema,
+    note:noteSchema
+})
+
+const updateTopicTitleSchema = z.object({
+    topicId:objectIdSchema,
+    title:titleSchema
+})
 
 const deleteTopicSchema = z.object({
     topicId:objectIdSchema,
@@ -102,8 +133,12 @@ const deleteTopicSchema = z.object({
 })
 
 const deleteFeedbackSchema = z.object({
-    topicId:objectIdSchema.optional(),
     userId:objectIdSchema,
+    feedbackId:objectIdSchema
+})
+
+const deleteFeedbackFromTopicSchema = z.object({
+    topicId:objectIdSchema,
     feedbackId:objectIdSchema
 })
 
@@ -114,11 +149,18 @@ export {
     noteSchema,
     titleSchema,
     objectIdSchema,
+    OTPSchema,
+    toggleAcceptingFeedbacksSchema,
     signUpSchema,
     loginSchema,
     loginSchema2,
     createTopicSchema,
+    getAllFeedbacksOfTopicSchema,
+    toggleTopicAllowingFeedbacksSchema,
     giveFeeedbackSchema,
+    giveFeedbackInTopicSchema,
+    updateTopicTitleSchema,
     deleteTopicSchema,
-    deleteFeedbackSchema
+    deleteFeedbackSchema,
+    deleteFeedbackFromTopicSchema
 }

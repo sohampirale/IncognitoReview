@@ -7,7 +7,8 @@ async function sendEmailVerification(user:IUser){
     if(user.isVerified){
          return {
             message:"User is already verified",
-            success:false
+            success:false,
+            status:400
         }
     }
 
@@ -28,19 +29,22 @@ async function sendEmailVerification(user:IUser){
         if(error){
             return {
                 message:"Failed to send email",
-                success:false
+                success:false,
+                status:500
             } 
         }
 
         console.log('Email sent successfully');
         return {
             message:"Verification email sent successfully",
-            success:true
+            success:true,
+            status:200
         }
     } catch (error) {
         return {
             message:"Failed to send email",
-            success:false
+            success:false,
+            status:500
         }
     }
 }

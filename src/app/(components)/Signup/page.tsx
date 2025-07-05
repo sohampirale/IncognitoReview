@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useDispatch } from "react-redux";
-import {login,logout} from "../../store/userSlice"
+import { login, logout } from "../../../store/userSlice"
 import { useRouter } from "next/navigation";
-// import sendEmailVerification from "@/utils/emails/sendEmailVerification";
 
 export default function Signup() {
   console.log('Inside <Signup/>');
@@ -14,8 +13,26 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [notification,setNotification] = useState("")
-  const [emailVerification,setEmailVerification] = useState(false)
+  const [notification, setNotification] = useState("")
+
+
+  useEffect(() => {
+    if(!username){
+      setNotification("")
+      return;
+    }  
+    const timeoutId = setTimeout(()=>{  
+      if(username.length<2){
+        setNotification("min. length : 2")
+        return;
+      }    
+      checkUniqueUsername()
+    },700)
+
+    return ()=>{
+      clearTimeout(timeoutId)
+    }
+  }, [username])
 
   async function handleSignup() {
     setLoading(true);
@@ -27,11 +44,11 @@ export default function Signup() {
       });
 
       console.log("data:", JSON.stringify(data));
-      console.log('data.data.emailVerificationSent = '+data.data.emailVerificationSent);
-      
-      if(!data.data.signup){
+      console.log('data.data.emailVerificationSent = ' + data.data.emailVerificationSent);
+
+      if (!data.data.signup) {
         router.push("/Home")
-      } else if(data.data.emailVerificationSent){
+      } else if (data.data.emailVerificationSent) {
         router.push("/Email/VerifyEmail")
       } else {
         router.push("/Home")
@@ -42,6 +59,23 @@ export default function Signup() {
       }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function checkUniqueUsername() {
+    console.log('making check');
+    try {
+      const { data: response } = await axios.post(`${process.env.NEXT_PUBLIC_URL}/api/auth/check-unique/username`, {
+        username
+      })
+      console.log('response = ' + JSON.stringify(response));
+
+      setNotification(response.message);
+
+    } catch (error: any) {
+      console.log('ERROR data : ' + JSON.stringify(error.response.data));
+
+      setNotification(error.response.data.message);
     }
   }
 
@@ -62,11 +96,14 @@ export default function Signup() {
             >
               Username
             </label>
+            <label>{notification}</label>
             <input
               id="username"
               type="text"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value)
+              }}
               placeholder="Your alias"
               className="w-full px-4 py-2 bg-gray-700 text-gray-100 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             />
@@ -111,10 +148,9 @@ export default function Signup() {
           onClick={handleSignup}
           disabled={loading || !username || !email || !password}
           className={`w-full py-2 rounded-lg text-lg font-medium transition 
-            ${
-              loading || !username || !email || !password
-                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-md hover:shadow-lg"
+            ${loading || !username || !email || !password
+              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+              : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-md hover:shadow-lg"
             }`}
         >
           {loading ? "Signing up…" : "Sign Up"}

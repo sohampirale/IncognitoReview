@@ -7,10 +7,11 @@ interface IUser extends Document{
     email:string;
     username:string;
     password:string;
+    avatar_url?:string;
     acceptingFeedbacks:boolean;
     personalFeedbacks:Types.ObjectId[];
-    verifyCode:string;
-    verifyCodeExpiry:Date;
+    verifyCode:string | null;
+    verifyCodeExpiry:Date | null;
     isVerified:boolean;
     createdAt:Date;
     updatedAt:Date;
@@ -35,6 +36,9 @@ const userSchema :Schema<IUser>= new Schema({
         type:String,
         required:true
     },
+    avatar_url:{
+        type:String
+    },
     acceptingFeedbacks:{
         type:Boolean,
         default:true
@@ -49,7 +53,7 @@ const userSchema :Schema<IUser>= new Schema({
     },
     verifyCodeExpiry:{
         type:Date,
-        default:Date.now()
+        default:null
     },
     isVerified:{
         type:Boolean,
@@ -76,8 +80,10 @@ const User =(mongoose.models.User) || (mongoose.model<IUser>("User",userSchema))
 interface ITopic extends Document{
     owner:Types.ObjectId;
     title:string,
-    allowingResponses:boolean;
-    feedbacks:Types.ObjectId[];
+    allowingFeedbacks:boolean;
+    feedbacksPublic:boolean;
+    // feedbacks:Types.ObjectId[];
+    thumbnail_url?:string;
     createdAt:Date;
     updatedAt:Date;
 }
@@ -92,14 +98,18 @@ const topicSchema :Schema<ITopic>= new Schema({
         type:String,
         required:true
     },
-    allowingResponses:{
+    allowingFeedbacks:{
         type:Boolean,
         default:true
     },
-    feedbacks:[{
-        type:Schema.Types.ObjectId,
-        ref:"Feedback"
-    }]
+    feedbacksPublic:{
+        type:Boolean,
+        default:true
+    },
+    thumbnail_url:{
+        type:String,
+        default:null
+    }
 },{
     timestamps:true
 })
@@ -107,8 +117,8 @@ const topicSchema :Schema<ITopic>= new Schema({
 const Topic = (mongoose.models.Topic) || (mongoose.model("Topic",topicSchema));
 
 interface IFeedback extends Document{
-    owner?:Types.ObjectId | null;
-    topic?:Types.ObjectId | null;
+    owner?:Types.ObjectId;
+    topicId?:Types.ObjectId | null;
     note:string;
     updatedAt:Date;
     createdAt:Date
@@ -120,7 +130,7 @@ const feedbackSchema:Schema<IFeedback> = new Schema({
         ref:"User",
         default:null
     },
-    topic:{
+    topicId:{
         type:Schema.Types.ObjectId,
         ref:"Topic",
         default:null

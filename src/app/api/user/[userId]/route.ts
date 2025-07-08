@@ -12,8 +12,10 @@ import { User,Topic } from "@/models";
 //get all topics create by a user
 /* userId  */
 export async function GET(req:Request,{params}:{params:{userId:string}}){
-    const {userId:receivedUserId} = params;
+     const pathname = new URL(req.url).pathname;
 
+    const receivedUserId = pathname.split('/').pop()!;
+    
     const parsed=objectIdSchema.safeParse(receivedUserId);
     if(!parsed.success){
         return Response.json(

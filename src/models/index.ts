@@ -37,7 +37,8 @@ const userSchema :Schema<IUser>= new Schema({
         required:true
     },
     avatar_url:{
-        type:String
+        type:String,
+        default:"https://imgs.search.brave.com/6wkaBbsmkyuEl7tbLrfD-ZYYiaR8FxHZfH_4EVzu9wk/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wNDAv/MjQzLzQxNy9zbWFs/bC9zcHktaWNvbi12/ZWN0b3IuanBn"
     },
     acceptingFeedbacks:{
         type:Boolean,
@@ -57,7 +58,7 @@ const userSchema :Schema<IUser>= new Schema({
     },
     isVerified:{
         type:Boolean,
-        default:false
+        default:true
     }
 },{
     timestamps:true
@@ -82,7 +83,6 @@ interface ITopic extends Document{
     title:string,
     allowingFeedbacks:boolean;
     feedbacksPublic:boolean;
-    // feedbacks:Types.ObjectId[];
     thumbnail_url?:string;
     createdAt:Date;
     updatedAt:Date;
@@ -115,6 +115,44 @@ const topicSchema :Schema<ITopic>= new Schema({
 })
 
 const Topic = (mongoose.models.Topic) || (mongoose.model("Topic",topicSchema));
+
+interface ITopicReport extends Document{
+    topicId:Types.ObjectId;
+    rating:number;
+    nPositive:number;
+    nNegative:number;
+    improvements:string[];
+    createdAt:Date;
+    updatedAt:Date;
+}
+
+const topicReportSchema:Schema<ITopicReport> = new Schema({
+    topicId:{
+        type:Schema.Types.ObjectId,
+        ref:"Topic",
+        required:true
+    },
+    rating:{
+        type:Number,
+        default:null
+    },
+    nPositive:{
+        type:Number,
+        default:null
+    },
+    nNegative:{
+        type:Number,
+        default:null
+    },
+    improvements:{
+        type:[String],
+        default:[]
+    }
+},{
+    timestamps:true
+})
+
+const TopicReport =mongoose.models.TopicReport || mongoose.model("TopicReport",topicReportSchema);
 
 interface IFeedback extends Document{
     owner?:Types.ObjectId;
@@ -156,7 +194,9 @@ const Feedback = (mongoose.models.Feedback) || (mongoose.model("Feedback",feedba
 
 export {
     type IUser,
+    type ITopic,
     User,
     Feedback,
-    Topic
+    Topic,
+    TopicReport
 }

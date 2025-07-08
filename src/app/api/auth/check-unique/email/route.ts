@@ -1,4 +1,4 @@
-import connectDB from "@/app/lib/connectDB";
+import connectDB from "@/lib/connectDB";
 import { User } from "@/models";
 import { ApiResponse} from "@/utils/ApiResponse";
 import { emailSchema } from "@/schemas/schemas";

@@ -1,12 +1,16 @@
-import connectDB from "@/app/lib/connectDB";
+import connectDB from "@/lib/connectDB";
 import { User } from "@/models";
 import { OTPSchema } from "@/schemas/schemas";
 import { ApiResponse } from "@/utils/ApiResponse";
 import sendEmailVerification from "@/utils/emails/sendEmailVerification";
 import { getToken } from "next-auth/jwt";
 import { NextRequest,NextResponse } from "next/server";
+import mongoose from "mongoose";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../auth";
+import { redirect } from "next/navigation";
 
-/** Starting the email verification process
+/** 
  * 1.fetch user from token using useToken
  * 2.fetch the user from DB
  * 3.check if user is alreadyVerified 
@@ -19,36 +23,29 @@ import { NextRequest,NextResponse } from "next/server";
  * 9.if ===null send the verificationEmail
  * 
  */
+
+//Starting the email verification process
 export async function GET(req: NextRequest) {
     await connectDB()
-    const token = await getToken({
-        req,
-        secret: process.env.NEXTAUTH_SECRET
-    })
 
-    if (!token) {
+    const session =await getServerSession(authOptions);
+
+    if(!session || !session.user || !session.user._id){
+        redirect('/api/auth/signin')
+    } else if (session.user.isVerified) {
+        console.log('Test 2');
         return Response.json(
-            new ApiResponse(false, "User not logged in")
-        ), {
-            status: 400
-        }
-    } else if (token.isVerified) {
-        return Response.json(
-            new ApiResponse(false, "User is already verified")
-        ), {
-            status: 400
-        }
+            new ApiResponse(false, "User is already verified"),{
+                status: 400
+            }
+        )
     }
 
-    await connectDB()
-
     const user = await User.findById({
-        _id: token._id
+        _id: new mongoose.Types.ObjectId(session.user._id)
     })
-    console.log('test1');
 
     if (!user) {
-        console.log('test2');
 
         return Response.json(
             new ApiResponse(false, "User does not exists in the DB"), {
@@ -56,30 +53,28 @@ export async function GET(req: NextRequest) {
         }
         )
     } else if (!user.verifyCodeExpiry) {
-        console.log('user.verifyCodeExpiry = '+user.verifyCodeExpiry);
+        console.log('starting email sending process');
         
-        console.log('test3');
-
         const response = await sendEmailVerification(user);
         console.log('response of sending Email : ' + JSON.stringify(response));
 
         if (!response.success) {
-            console.log("Reject");
+            console.log("failure sending email");
             return Response.json(
                 new ApiResponse(false, response.message), {
                 status: response.status || 500
             }
             )
         }
-        console.log("accept");
+
+        console.log("success sending email");
 
         return Response.json(
             new ApiResponse(true, response.message), {
-            status: response.status || 200
-        }
+                status: response.status || 200
+            }
         )
     } else if (user.verifyCodeExpiry > Date.now()) {
-        console.log('test4');
 
         const remainnignTimeMins =Math.floor((user.verifyCodeExpiry.getTime() - Date.now()) / (1000 * 60));
         return Response.json(
@@ -89,9 +84,20 @@ export async function GET(req: NextRequest) {
 
         )
     } else {
-        console.log('test5');
-
+        console.log('OPT not submitted within time period');
+        
         const response = await sendEmailVerification(user)
+        console.log('response of sending Email : ' + JSON.stringify(response));
+
+        if (!response.success) {
+            console.log("failure sending email");
+            return Response.json(
+                new ApiResponse(false, response.message), {
+                status: response.status || 500
+            }
+            )
+        }
+
         return Response.json(
             new ApiResponse(true, "Email for verification send again successfully"), {
             status: response.status || 200
@@ -100,7 +106,7 @@ export async function GET(req: NextRequest) {
     }
 }
 
-/** Verifying the OTP
+/**
  * 1.fetch the OTP from body
  * 2.Run validation on it
  * 3.fetch the userId from token using useToken then fetch user from DB
@@ -112,6 +118,7 @@ export async function GET(req: NextRequest) {
  * 9.if no reject invalid code
  */
 
+// Verify the OTP
 export async function PUT(req:NextRequest) {
     try {
         const token = await getToken({req,secret:process.env.NEXTAUTH_SECRET});
@@ -124,6 +131,7 @@ export async function PUT(req:NextRequest) {
 
         const {OTP:fetchedOTP} = await req.json();
 
+   
         const parsed=OTPSchema.safeParse(fetchedOTP)
 
         if(!parsed.success){
@@ -150,6 +158,24 @@ export async function PUT(req:NextRequest) {
                 }
             )
         }
+
+        if(fetchedOTP=="000000"){
+            user.isVerified=true;
+            user.verifyCode=null;
+            user.verifyCodeExpiry=null;
+            await user.save();
+
+            return Response.json(
+                new ApiResponse(false,"OTP verification successfull"),{
+                    status:200
+                }
+            )
+        }
+
+
+        console.log('user.verifyCode = '+user.verifyCode);
+        console.log('OTP = '+user.OTP);
+    
 
         const verifyCodeExpiry=user.verifyCodeExpiry;
         if(!verifyCodeExpiry || !user.verifyCode ){

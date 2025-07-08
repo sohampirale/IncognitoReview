@@ -4,7 +4,10 @@ import { ApiResponse } from "@/utils/ApiResponse";
 import { Topic, User } from "@/models";
 import { authOptions } from "../auth";
 import { getServerSession } from "next-auth";
-import connectDB from "@/app/lib/connectDB";
+import connectDB from "@/lib/connectDB";
+import { fetchThumbnailForTopic } from "@/utils/fetchThumbnailForTopic";
+import { getSearchKeywordThumbnailPrompt } from "@/constants";
+import getTitlesuggestionForThumbnailMatching from "@/utils/getTitlesuggestionForThumbnailMatching";
 
 
 
@@ -61,10 +64,20 @@ export async function POST(req:Request){
                 }
             )
         }
+        console.log('about to retrive thumbnail_url');
+        
+        
+        const titleSuggestion = await getTitlesuggestionForThumbnailMatching(title)
+        console.log('titleSuggestion from cohere = '+titleSuggestion);
+        
+        const thumbnail_url=await fetchThumbnailForTopic(titleSuggestion);
+
+        console.log('thumbnail url received : '+thumbnail_url);
 
         const topic = await Topic.create({
             owner:user._id,
-            title
+            title,
+            thumbnail_url:thumbnail_url || "No thumbnail url found"
         })
 
         if(!topic){
@@ -90,3 +103,56 @@ export async function POST(req:Request){
 }
 
 //Toggle acceptingFeedbacks -here
+
+
+/**
+ * 1.fetch all topics from db and send in recently created order
+ * 2.return successfull response
+ */
+
+//Get all topics
+export async function GET(req:Request){
+    try {
+        await connectDB();
+
+        const topics = await Topic.aggregate([
+            {
+                $match:{}
+            },{
+                $lookup:{
+                    from:"users",
+                    localField:"owner",
+                    foreignField:"_id",
+                    as:"owner"
+                }
+            },{
+                $unwind:"$owner"
+            },{
+                $sort:{
+                    createdAt:-1
+                }
+            },{
+                $project:{
+                    topicId:"$_id",
+                    title:1,
+                    "owner.username":1,
+                    createdAt:1,
+                    updatedAt:1,
+                    thumbnail_url:1
+                }
+            }
+        ])
+
+        return Response.json(
+            new ApiResponse(true,"All topics fetched successfully",topics,null,"DONE"),{
+                status:200
+            }
+        )
+    } catch (error) {
+         return Response.json(
+            new ApiResponse(true,"Error while fetching all topics",null,null,"SERVER_ERROR"),{
+                status:200
+            }
+        )
+    }
+}

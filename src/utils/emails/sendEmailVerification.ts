@@ -1,6 +1,6 @@
 import { IUser,User } from "@/models";
 import randomOTPGenerator from "../randomOTPGenerator";
-import resend from "@/app/lib/resend";
+import resend from "@/lib/resend";
 import EmailVerification from "../../../emails/EmailVerification";
 
 async function sendEmailVerification(user:IUser){
@@ -27,6 +27,8 @@ async function sendEmailVerification(user:IUser){
         })
 
         if(error){
+            console.log('ERROR :: sendEmailVerification :: '+JSON.stringify(error));
+            
             return {
                 message:"Failed to send email",
                 success:false,

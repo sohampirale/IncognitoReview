@@ -2,7 +2,7 @@ import {User} from "../../../models/index"
 import { ApiResponse } from "@/utils/ApiResponse";
 import { IPaylod,generateAccessAndRefreshToken } from "@/utils/token";
 import {serialize} from "cookie"
-import connectDB from "@/app/lib/connectDB";
+import connectDB from "@/lib/connectDB";
 import sendEmailVerification from "@/utils/emails/sendEmailVerification";
 
 export async function POST(req:Request){
@@ -12,9 +12,11 @@ export async function POST(req:Request){
     console.log('test1');
 
     try {
-        const existingUserByEmail = await User.findOne({
-            email
-        })
+        // const existingUserByEmail = await User.findOne({
+        //     email
+        // })
+
+        const existingUserByEmail=false;
         const existingUserByUsername =  await User.findOne({
             username
         })

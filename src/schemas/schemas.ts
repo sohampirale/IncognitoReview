@@ -11,6 +11,7 @@ import {z} from "zod"
  * userId
  * topicId
  * feedbackId
+ * topicReport
  */
 
 /**
@@ -24,7 +25,7 @@ import {z} from "zod"
  * updateTopicTitle
  * deleteTopic
  * deleteFeedback
- * verifyEmail
+ * verifyEmail 
  */
 
 const usernameSchema = z
@@ -71,6 +72,13 @@ const OTPSchema= z
 
 const toggleAcceptingFeedbacksSchema=z
     .boolean()
+
+const topicReportSchema = z.object({
+    nPositive: z.number(),
+    nNegative: z.number(),
+    rating: z.number().min(0).max(10),
+    improvements: z.array(z.string()),
+  });
 
 
 // const getMeSchema=z.object({
@@ -151,6 +159,7 @@ export {
     objectIdSchema,
     OTPSchema,
     toggleAcceptingFeedbacksSchema,
+    topicReportSchema,
     signUpSchema,
     loginSchema,
     loginSchema2,

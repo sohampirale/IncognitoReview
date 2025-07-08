@@ -1,9 +1,14 @@
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth";
 import { ApiResponse } from "@/utils/ApiResponse";
 import { toggleTopicAllowingFeedbacksSchema,giveFeedbackInTopicSchema, objectIdSchema, getAllFeedbacksOfTopicSchema } from "@/schemas/schemas";
 import { Feedback, Topic, User } from "@/models";
-import connectDB from "@/app/lib/connectDB";
+import connectDB from "@/lib/connectDB";
+import { NextRequest } from "next/server";
 
 /**
  * 1.Get all feedbacks of a topic
@@ -26,9 +31,11 @@ import connectDB from "@/app/lib/connectDB";
  * 9.return the successful response
  */
 
-export async function GET(req:Request,{params}:{params:{topicId:string}}){
+export async function GET(req:Request,  
+    { params: { topicId:receivedTopicId } }: { params: { topicId: string } }
+){
     try {
-        const {topicId:receivedTopicId} = params;
+        // const {topicId:receivedTopicId} = params;
 
         const parsed = objectIdSchema.safeParse(receivedTopicId)
 
@@ -145,10 +152,18 @@ export async function PATCH(req:Request,{
     }
 }){
     try {
-        const {topicId:receivedTopicId} = params;
-        const {allowingFeedbacks:receivedAllowingFeedbacks} = await req.json();
-        const session = await getServerSession(authOptions);
 
+        console.log('inside api/topic/[topicId] PATCH');
+        
+        const pathname = new URL(req.url).pathname;
+        const receivedTopicId = pathname.split('/').pop()!;
+        
+        
+        const {allowingFeedbacks:receivedAllowingFeedbacks} = await req.json();
+        console.log('allowingFeedbacks = '+receivedAllowingFeedbacks);
+        const session = await getServerSession(authOptions);
+        console.log('session fetched');
+        
         if(!session){
             return Response.json(
                 new ApiResponse(false,"User is not logged in",null,null,"NOT_LOGGED_IN"),{
@@ -156,6 +171,7 @@ export async function PATCH(req:Request,{
                 }
             )
         }
+        console.log('test-1');
 
         const parsed=toggleTopicAllowingFeedbacksSchema.safeParse({
             topicId:receivedTopicId,
@@ -180,13 +196,13 @@ export async function PATCH(req:Request,{
                     status:404
                 }
             )
-        }else if(topic.owner.equals(session.user._id)){
+        }else if(!topic.owner.equals(session.user._id)){
             return Response.json(
                 new ApiResponse(false,"Unauthorized",null,null,"UNAUTHORIZED"),{
                     status:400
                 }
             )
-        } else if(topic.acceptingFeedbacks==allowingFeedbacks){
+        } else if(topic.allowingFeedbacks==allowingFeedbacks){
             let message="This topic is already "+(allowingFeedbacks?"":" not")+" allowing feedbacks"
 
             return Response.json(
@@ -195,12 +211,13 @@ export async function PATCH(req:Request,{
                 }
             )
         }
-
-        topic.acceptingFeedbacks=!topic.acceptingFeedbacks;
+        
+        topic.allowingFeedbacks=allowingFeedbacks;
         await topic.save();
 
         let message="This topic is now "+(allowingFeedbacks?"":" not")+" allowing feedbacks"
-
+        console.log(message);
+        
         return Response.json(
             new ApiResponse(true,message,null,null,"DONE"),{
                 status:200
@@ -229,15 +246,18 @@ export async function PATCH(req:Request,{
  * 8.return successfull response
  */
 
-export async function POST(req:Request,{params}:{params:{
-    topicId:string
-}}){
+export async function POST(req:NextRequest,
+    { params }:{ params:{topicId:string}}
+){
     try {
-        const {note:rceivedNote} = await req.json();
-        const {topicId : receivedTopicId} = params;
+        const {note:receivedNote} = await req.json();
+
+         const pathname = new URL(req.url).pathname;
+
+        const receivedTopicId = pathname.split('/').pop()!;
 
         const parsed = giveFeedbackInTopicSchema.safeParse({
-            note:rceivedNote,
+            note:receivedNote,
             topicId:receivedTopicId
         })
     
@@ -249,9 +269,12 @@ export async function POST(req:Request,{params}:{params:{
             )
         }
 
+        await connectDB();
+
         const {topicId,note} = parsed.data;
 
         const topic = await Topic.findById(topicId);
+        console.log('topic = '+JSON.stringify(topic));
         
         if(!topic){
             return Response.json(
@@ -259,7 +282,7 @@ export async function POST(req:Request,{params}:{params:{
                     status:404
                 }
             )
-        } else if(!topic.acceptingFeedbacks){
+        } else if(!topic.allowingFeedbacks){
             return Response.json(
                 new ApiResponse(false,"This topic is not accepting feedbacks at the moment",null,null,"FEEDBACKS_DISABLED"),{
                     status:400
@@ -297,7 +320,7 @@ export async function POST(req:Request,{params}:{params:{
         }
 
         return Response.json(
-            new ApiResponse(false,"Feedback give successfully",null,null,"DONE"),{
+            new ApiResponse(true,"Feedback give successfully",null,null,"DONE"),{
                 status:200
             }
         )

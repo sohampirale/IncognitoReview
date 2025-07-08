@@ -1,9 +1,7 @@
 import {NextAuthOptions} from "next-auth"
 import Credentials from "next-auth/providers/credentials"
-
-//
 import { User } from "@/models"
-import connectDB from "../lib/connectDB"
+import connectDB from "../../lib/connectDB"
 import GithubProvider from "next-auth/providers/github"
 
 export const authOptions:NextAuthOptions={
@@ -49,7 +47,7 @@ export const authOptions:NextAuthOptions={
         })
     ],
     pages:{
-        // signIn:"/auth/sign-in"
+        signIn:"/sign-in"
     },
     session:{
         strategy:"jwt"
@@ -58,17 +56,31 @@ export const authOptions:NextAuthOptions={
     callbacks:{
         async jwt({token,user,account}){
             console.log('Inside jwt() of auth.ts');
-            if(account?.provider==="credentials"){
-                token._id=user._id;
-                token.username=user.username;
-                token.email=user.email;
-                token.isVerified=user.isVerified;
-                token.acceptingFeedbacks=user.acceptingFeedbacks;
-            } else if(account?.provider==="github"){
-                token._id=user.id;
-                token.username=user.login || user.name || "NO NAME";
-                token.email = user.email ;
-                token.avatar_url = user.avatar_url;
+            if(user){
+                if(account?.provider==="credentials"){
+                    token._id=user._id;
+                    token.username=user.username;
+                    token.email=user.email;
+                    token.isVerified=user.isVerified;
+                    token.acceptingFeedbacks=user.acceptingFeedbacks;
+                    token.avatar_url=user.avatar_url;
+                } else if(account?.provider==="github"){
+                    token._id=user.id;
+                    token.username=user.login || user.name || "NO NAME";
+                    token.email = user.email ;
+                    token.avatar_url = user.avatar_url;
+                }
+            } else {
+                await connectDB();
+                const dbUser = await User.findById(token._id);
+                if(!dbUser) return token;
+                token.username = dbUser.username;
+                token.email = dbUser.email;
+                token.isVerified = dbUser.isVerified;
+                token.acceptingFeedbacks = dbUser.acceptingFeedbacks;
+                token.avatar_url = dbUser.avatar_url;
+
+                return token;
             }
             return token;
         },
@@ -80,8 +92,9 @@ export const authOptions:NextAuthOptions={
                 session.user.email=token.email;
                 session.user.isVerified=token.isVerified;
                 session.user.acceptingFeedbacks=token.acceptingFeedbacks;
+                session.user.avatar_url=token.avatar_url;
             }
             return session;
         }
     }
-} 
+}

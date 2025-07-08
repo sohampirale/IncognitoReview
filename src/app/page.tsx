@@ -1,15 +1,10 @@
-"use client"
-import { signOut } from "next-auth/react";
+import Home from "@/Components/Home/Home";
 
-export default function Home() {
+export default function HomePage() {
+
   return (
     <>
-      Hello World!
-      <button onClick={async()=>{
-        await signOut()
-        console.log('Logout done');
-        
-        }}>Sign Out</button>
+      <Home/>
     </>
   );
 }

@@ -21,6 +21,7 @@ declare module "next-auth"{
             email?:string;
             isVerified?:boolean;
             acceptingFeedbacks?:boolean;
+            avatar_url?:string
         } & DefaultSession["user"]
     }
 }

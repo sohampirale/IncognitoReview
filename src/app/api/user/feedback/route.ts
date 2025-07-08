@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth";
 import { ApiResponse } from "@/utils/ApiResponse";
-import connectDB from "@/app/lib/connectDB";
+import connectDB from "@/lib/connectDB";
 import { User,Feedback } from "@/models";
 import { giveFeeedbackSchema,deleteFeedbackSchema,toggleAcceptingFeedbacksSchema } from "@/schemas/schemas";
 

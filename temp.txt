@@ -1,0 +1,3 @@
+  const pathname = new URL(req.url).pathname;
+
+        const receivedTopicId = pathname.split('/').pop()!;

@@ -5,6 +5,7 @@ import {serialize} from "cookie"
 import connectDB from "@/lib/connectDB";
 import sendEmailVerification from "@/utils/emails/sendEmailVerification";
 
+
 export async function POST(req:Request){
     await connectDB()
     console.log('inside api/signup POST');

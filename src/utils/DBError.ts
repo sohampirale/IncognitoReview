@@ -3,7 +3,7 @@ class DBError extends Error{
     error?:any
 
     constructor(statusCode:number,message:string,error?:any){
-        super(message)
+        super("DB Error :: "+message)
         this.statusCode=statusCode;
         this.error=error;
     }

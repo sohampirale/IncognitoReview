@@ -2,11 +2,11 @@ import React from "react"
 import randomOTPGenerator from "@/utils/randomOTPGenerator"
 
 interface IEmailVerification {
-    name: string
+    name: string,
+    OTP:string
 }
 
-export default function EmailVerification({ name }: IEmailVerification) {
-    const OTP = randomOTPGenerator();
+export default function EmailVerification({ name,OTP }: IEmailVerification) {
     return (
         <html>
             <body

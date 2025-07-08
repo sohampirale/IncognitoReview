@@ -1,15 +1,12 @@
-import mongoose from "mongoose";
 import jwt from "jsonwebtoken"
 
 interface IPaylod{
-    _id:mongoose.Types.ObjectId | string,
+    _id:string,
     username:string,
     isVerified?:boolean
 }
 
 function generateAccessToken(payload:IPaylod){
-    payload._id=payload._id.toString();
-
     try {
         const accessToken = jwt.sign(payload,process.env.JWT_SECRET_ACCESS_TOKEN!);
         return accessToken;
@@ -19,9 +16,9 @@ function generateAccessToken(payload:IPaylod){
 }
 
 function generateRefreshToken(payload:IPaylod){
-    payload._id=payload._id.toString();
     try {
         const refreshToken=jwt.sign(payload,process.env.JWT_SECRET_REFRESH_TOKEN!)
+        return refreshToken;
     } catch (error) {
         throw error;
     }
@@ -38,7 +35,7 @@ function generateAccessAndRefreshToken(payload:IPaylod){
 }
 
 export {
-    IPaylod,
+    type IPaylod,
     generateAccessToken,
     generateRefreshToken,
     generateAccessAndRefreshToken

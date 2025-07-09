@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "../Components/Header/Header";
 import Footer from "@/Components/Footer/Footer";
 import Provider from "@/Components/Provider/Provider";
+import Chatbot from "@/Components/Chatbot/Chatbot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,21 +33,20 @@ export default function RootLayout({
       >
         <main className="w-full min-h-screen">
           <Provider>
-            {/* Header with container */}
             <div className="max-w-6xl mx-auto px-4 w-full">
               <Header />
             </div>
-            
-            {/* Main content - full width to eliminate white lines */}
+                     
             <div className="w-full">
               {children}
             </div>
-            
-            {/* Footer - full width */}
+                     
             <Footer/>
+            
           </Provider>
         </main>
-      </body>
+        <Chatbot/>
+        </body>
     </html>
   );
 }

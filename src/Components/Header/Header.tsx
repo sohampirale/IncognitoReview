@@ -3,7 +3,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import MyAvatar from "../MyAvatar/MyAvatar";
+// import MyAvatar from "../MyAvatar/MyAvatar";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -82,11 +82,11 @@ export default function Header() {
                                 </div>
                                 <div className="relative">
                                     <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur opacity-60 animate-pulse" />
-                                    <MyAvatar
+                                    {/* <MyAvatar
                                         src={session.user.avatar_url!}
                                         fallback={session.user.username!}
                                         className="relative w-10 h-10 ring-2 ring-gray-700 hover:ring-purple-500 transition-all duration-200"
-                                    />
+                                    /> */}
                                 </div>
                             </div>
                         ) : status === "unauthenticated" ? (

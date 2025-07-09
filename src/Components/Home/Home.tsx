@@ -26,7 +26,7 @@ export default function Home() {
     }
     fetchTopics();
   }, []);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm] = useState('');
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('newest');
 

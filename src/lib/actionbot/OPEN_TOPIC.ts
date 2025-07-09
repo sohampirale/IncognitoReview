@@ -1,15 +1,17 @@
-import { Topic } from "@/models";
+// import { Topic } from "@/models";
+import {Topic} from "../../models"
 import connectDB from "../connectDB";
 import axios from "axios";
 
 export async function getTopicsWithTopicName(topicName:string){
+
     try {
         await connectDB();
 
         const topics = await Topic.aggregate([
             {
                 $match:{
-                    title:{ $regex: new RegExp("genai", "i") }
+                    title:{ $regex: new RegExp(topicName, "i") }
                 }
             },{
                 $lookup:{
@@ -19,19 +21,21 @@ export async function getTopicsWithTopicName(topicName:string){
                     as:"owner"
                 }
             },{
+                $unwind:"$owner"
+            },{
                 $project:{
-                    $topicId:"$_id",
+                    topicId:"$_id",
                     _id:0,
                     topicName:"$title",
-                    title:0,
                     "owner.username":1,
                     "owner._id":1
                 }
             }
         ])
 
-        if(!topics)return null;
+        if(!topics)return null
         return topics;
+
     } catch (error) {
         console.log('Error while retriving topics');
         return null;

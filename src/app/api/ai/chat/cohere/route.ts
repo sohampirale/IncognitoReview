@@ -45,9 +45,11 @@ export  async function POST(req:Request){
         const jsonResponse = JSON.parse(data)
         const action =jsonResponse.action;
         if(action==='OPEN_TOPIC'){
+            console.log("inside OPEN_TOPIC")
             const topicName=jsonResponse.topic;
             const topics = await getTopicsWithTopicName(topicName);
             if(!topics || topics.length===0){
+                console.log("length 0")
                 const allTopics = await getAllTopics();
 
                 const fuse = new Fuse(allTopics!, {
@@ -63,15 +65,27 @@ export  async function POST(req:Request){
                         }
                     )
                 }
+
+                responseData.redirectUrl=`/Topic/${fuseResults[0].item.topicId}`;
+
+                return Response.json(
+                    new ApiResponse(false,"No topics found with name : "+topicName,responseData,null,"EMPTY"),{
+                        status:404
+                    }
+                )
                 
             } else if(topics.length == 1){
+                console.log("length 1")
                 responseData.redirectUrl=`/Topic/${topics[0].topicId}`;
                 return Response.json(
-                    new ApiResponse(true,"Redirecting you to the requested topic...🦾",responseData,null,"SERVER_ERROR"),{
-                        status:500
+                    new ApiResponse(true,"Redirecting you to the requested topic...🦾",responseData,null,"DONE"),{
+                        status:200
                     }
                 )
             }
+
+            console.log("length >1")
+
 
             const secondPrompt = findBestTopicFromFoundTopicsPrompt(userMessage,topics,session?.user?._id?.toString())
 

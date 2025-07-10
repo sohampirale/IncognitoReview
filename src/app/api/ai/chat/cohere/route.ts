@@ -5,9 +5,7 @@ import axios from "axios";
 import { ApiResponse } from "@/utils/ApiResponse";
 import { getTopicsWithTopicName, findBestTopicFromFoundTopics, getAllTopics } from "@/lib/actionbot/OPEN_TOPIC";
 import Fuse from "fuse.js"
-// import {sendFeedbackToTopic} from "@/lib/actionbot/OPEN_TOPIC"
 import {sendFeedbackToTopic} from "../../../../../lib/actionbot/GIVE_DIRECT_FEEDBACK"
-
 
 export  async function POST(req:Request){
     console.log('inside /api/ai/chat/cohere POST');

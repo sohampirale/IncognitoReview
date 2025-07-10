@@ -1,6 +1,5 @@
 import {Topic,Feedback} from "../../models"
 import connectDB from "../connectDB"
-import { ApiResponse } from "@/utils/ApiResponse";
 import mongoose from "mongoose"
 
 export async function sendFeedbackToTopic(topicId:string,note:string){

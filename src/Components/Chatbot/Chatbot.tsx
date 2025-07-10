@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, X, Bot } from 'lucide-react';
 import axios from 'axios';
-import {useRouter} from "next/nevigation"
+import {useRouter} from "next/navigation"
 
 const Chatbot = () => {
   const router = useRouter();
@@ -60,7 +60,7 @@ const Chatbot = () => {
         console.log("redirecting...")
         setTimeout(()=>{
           router.push(response.data.redirectUrl)
-        })
+        },0)
       }
 
       const botMessage = {

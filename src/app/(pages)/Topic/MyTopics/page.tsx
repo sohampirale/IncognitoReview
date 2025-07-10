@@ -9,7 +9,7 @@ async function MyTopicsPage() {
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user || !session.user._id) {
-        redirect("/api/auth/signin");
+        redirect("/Signin");
     }
 
     const topics = await getMyTopics(session.user._id);

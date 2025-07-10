@@ -4,7 +4,7 @@ import connectDB from "../connectDB";
 import axios from "axios";
 
 export async function getTopicsWithTopicName(topicName:string){
-
+    console.log("inside getTopicsWithTopicName")
     try {
         await connectDB();
 
@@ -27,6 +27,7 @@ export async function getTopicsWithTopicName(topicName:string){
                     topicId:"$_id",
                     _id:0,
                     topicName:"$title",
+                    allowingFeedbacks:1,
                     "owner.username":1,
                     "owner._id":1
                 }
@@ -43,7 +44,9 @@ export async function getTopicsWithTopicName(topicName:string){
 }   
 
 export async function findBestTopicFromFoundTopics(secondPrompt:string){
+    console.log("inside findBestTopicFromFoundTopics")
     try {
+        console.log("secondPrompot = "+secondPrompt)
         const {data:secondResponse} = await axios.post(
             "https://api.cohere.ai/v1/generate",
             {
@@ -63,11 +66,13 @@ export async function findBestTopicFromFoundTopics(secondPrompt:string){
         const jsonResponse2=JSON.parse(secondResponse?.generations[0].text);
         return jsonResponse2;
     } catch (error) {
+        console.log('Error while finding the best topic : '+(error))
         return null;
     }
 }
 
 export async function getAllTopics(){
+    console.log("inside getAllTopics")
     try {
         await connectDB();
 

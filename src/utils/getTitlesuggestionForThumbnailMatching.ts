@@ -24,7 +24,7 @@ export default async function getTitlesuggestionForThumbnailMatching(title:strin
             const jsonResponse=JSON.parse(textResponse.trim());
             
             return jsonResponse.searchKeyword;
-    } catch (error) {
+    } catch (_error) {
         console.log('Error whiel generating searchKeyword from cohere');
         return null;
     }

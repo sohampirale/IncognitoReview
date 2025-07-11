@@ -34,7 +34,7 @@ export default async function getAllTopics(){
         ])
 
         return topics;
-    } catch (error) {
+    } catch (_error) {
         return null;
     }
 }

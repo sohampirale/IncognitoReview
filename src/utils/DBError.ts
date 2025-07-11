@@ -1,6 +1,6 @@
 class DBError extends Error{
-    statusCode:Number;
-    error?:any
+    statusCode:number;
+    error?:unknown
 
     constructor(statusCode:number,message:string,error?:any){
         super("DB Error :: "+message)

@@ -13,7 +13,7 @@ export async function fetchThumbnailForTopic(topic: string) {
         const photo = data.photos?.[0];
 
         return photo?.src?.medium || null;
-    } catch (error) {
+    } catch (_error) {
         console.log('failed');
         
         return null

@@ -5,6 +5,7 @@ import Header from "../Components/Header/Header";
 import Footer from "@/Components/Footer/Footer";
 import Provider from "@/Components/Provider/Provider";
 import Chatbot from "@/Components/Chatbot/Chatbot";
+import IncognitoWelcomePopup from "@/Components/Popup/IncognitoWelcomePopup";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,7 @@ export default function RootLayout({
             </div>
                      
             <div className="w-full">
+              <IncognitoWelcomePopup/>
               {children}
             </div>
                      

@@ -82,7 +82,7 @@ FEEDBACK TO ANALYZE:
 /**
  * Generate stock photo search keyword for topic
  */
-export const getSearchKeywordThumbnailPrompt = (topicTitle) => `
+export const getSearchKeywordThumbnailPrompt = (topicTitle:string) => `
 ROLE: You are a visual content specialist for tech/business stock photography.
 
 TASK: Create a relevant stock photo search keyword for the topic: "${topicTitle}"

@@ -6,8 +6,7 @@ export default async function getTitlesuggestionForThumbnailMatching(title:strin
         const prompt = getSearchKeywordThumbnailPrompt(title);
 
          const {data} = await axios.post("https://api.cohere.ai/v1/generate", {
-         
-                model: "command", // or use "command-light"
+                model: "command", 
                 prompt,
                 max_tokens: 500,
                 temperature: 0.7,
@@ -23,6 +22,8 @@ export default async function getTitlesuggestionForThumbnailMatching(title:strin
             if(!textResponse)return null;
             const jsonResponse=JSON.parse(textResponse.trim());
             
+            console.log('title suggestion from coher e= '+jsonResponse.searchKeyword);
+                        
             return jsonResponse.searchKeyword;
     } catch (_error) {
         console.log('Error whiel generating searchKeyword from cohere');

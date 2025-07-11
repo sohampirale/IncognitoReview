@@ -1,7 +1,4 @@
 "use client";
-
-"use client";
-
 import { useSession } from "next-auth/react";
 // import MyAvatar from "../MyAvatar/MyAvatar";
 import { useRouter } from "next/navigation";

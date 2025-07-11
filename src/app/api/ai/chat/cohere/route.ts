@@ -8,6 +8,8 @@ import Fuse from "fuse.js"
 import { sendFeedbackToTopic } from "../../../../../lib/actionbot/GIVE_DIRECT_FEEDBACK"
 import connectDB from "@/lib/connectDB";
 import { Topic, TopicReport } from "@/models";
+import getTitlesuggestionForThumbnailMatching from "@/utils/getTitlesuggestionForThumbnailMatching";
+import { fetchThumbnailForTopic } from "@/utils/fetchThumbnailForTopic";
 
 export async function POST(req: Request) {
     console.log('inside /api/ai/chat/cohere POST');
@@ -312,6 +314,8 @@ export async function POST(req: Request) {
                 )
             }
         } else if (action === 'CREATE_TOPIC') {
+            console.log('inside CREATE_TOPIC');
+            
             try {
 
                 const session = await getServerSession(authOptions);
@@ -337,8 +341,8 @@ export async function POST(req: Request) {
                 if (topic) {
                     return Response.json(
                         new ApiResponse(false, "You have already created one topic with that name", jsonResponse), {
-                        status: 200
-                    }
+                            status: 200
+                        }
                     )
                 }
 
@@ -355,6 +359,18 @@ export async function POST(req: Request) {
                     )
                 }
 
+                
+                  
+                        
+                const titleSuggestion = await getTitlesuggestionForThumbnailMatching(newlyCreatedTopic.title)
+                console.log('titleSuggestion from cohere = '+titleSuggestion);
+                
+                const thumbnail_url=await fetchThumbnailForTopic(titleSuggestion);
+        
+                console.log('thumbnail url received : '+thumbnail_url);
+
+                newlyCreatedTopic.thumbnail_url=thumbnail_url;
+                await newlyCreatedTopic.save();
                 responseData.redirectUrl = `/Topic/${newlyCreatedTopic._id.toString()}`
 
                 return Response.json(

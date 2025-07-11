@@ -1,17 +1,18 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, X, Bot } from 'lucide-react';
+import { Send, X, Bot, MessageCircle, Plus, Eye, MessageSquare, BarChart3, Play, Pause } from 'lucide-react';
 import axios from 'axios';
-import {useRouter} from "next/navigation"
+import { useRouter } from 'next/navigation';
 
 const Chatbot = () => {
-  const router = useRouter();
+  const router = useRouter(); 
   const [isOpen, setIsOpen] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(true);
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Hello! I'm your AI assistant. How can I help you today?",
+      text: "👋 Welcome to IncognitoFeedback Assistant! I'm here to help you manage your topics and feedback. Please mention topic names exactly as they appear in your app for accurate results.",
       sender: 'bot',
       timestamp: new Date()
     }
@@ -19,6 +20,57 @@ const Chatbot = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const quickActions = [
+    {
+      id: 'create',
+      title: 'Create Topic',
+      description: 'Start a new topic',
+      icon: Plus,
+      template: 'I want to create topic [topic name]',
+      color: 'bg-emerald-500 hover:bg-emerald-600'
+    },
+    {
+      id: 'open',
+      title: 'Open Topic',
+      description: 'View existing topic',
+      icon: Eye,
+      template: 'I want to open topic [topic name]',
+      color: 'bg-blue-500 hover:bg-blue-600'
+    },
+    {
+      id: 'feedback',
+      title: 'Give Feedback',
+      description: 'Share your thoughts',
+      icon: MessageSquare,
+      template: 'I feel the [topic name] was [feedback]',
+      color: 'bg-purple-500 hover:bg-purple-600'
+    },
+    {
+      id: 'improvements',
+      title: 'Get Suggestions',
+      description: 'AI-generated improvements',
+      icon: BarChart3,
+      template: 'Generate improvements for [topic name]',
+      color: 'bg-orange-500 hover:bg-orange-600'
+    },
+    {
+      id: 'enable',
+      title: 'Enable Feedback',
+      description: 'Allow incoming feedback',
+      icon: Play,
+      template: 'Allow incoming feedbacks on topic [topic name]',
+      color: 'bg-green-500 hover:bg-green-600'
+    },
+    {
+      id: 'disable',
+      title: 'Disable Feedback',
+      description: 'Stop accepting feedback',
+      icon: Pause,
+      template: 'Stop allowing feedbacks on [topic name]',
+      color: 'bg-red-500 hover:bg-red-600'
+    }
+  ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -28,9 +80,18 @@ const Chatbot = () => {
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = async (messageText:string) => {
+  const handleQuickAction = (template) => {
+    setInputMessage(template);
+    setShowQuickActions(false);
+    // Focus on input after a brief delay
+    setTimeout(() => {
+      document.getElementById('chat-input')?.focus();
+    }, 100);
+  };
+
+  const sendMessage = async (messageText) => {
     if (!messageText.trim()) return;
-    console.log('messageText = '+messageText);
+    console.log('messageText = ' + messageText);
     
     const userMessage = {
       id: Date.now(),
@@ -42,25 +103,27 @@ const Chatbot = () => {
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setIsTyping(true);
+    setShowQuickActions(false);
 
     try {
-
-        
-      const {data:response} = await axios.post('/api/ai/chat/cohere', {
+ 
+      
+      const { data: response } = await axios.post('/api/ai/chat/cohere', {
         userMessage: messageText,
       });
+      
 
       if (!response) {
         throw new Error('Failed to send message');
       }
 
-      console.log('resposne received : '+JSON.stringify(response));
+      console.log('response received : ' + JSON.stringify(response));
       
-      if(response.data?.redirectUrl){
+      if (response.data?.redirectUrl) {
         console.log("redirecting...")
-        setTimeout(()=>{
-          router.push(response.data.redirectUrl)
-        },0)
+        setTimeout(() => {
+          router.push(response.data.redirectUrl) 
+        }, 0)
       }
 
       const botMessage = {
@@ -69,21 +132,30 @@ const Chatbot = () => {
         sender: 'bot',
         timestamp: new Date()
       };
-
-      setMessages(prev => [...prev, botMessage]);
-    } catch (error) {
-      if(axios.isAxiosError(error)){
-        console.error('Error sending message:', JSON.stringify(error!.response!.data));
-      }
       
-      const errorMessage = {
-        id: Date.now() + 1,
-        text: "I'm sorry, there was an error processing your request. Please try again.",
-        sender: 'bot',
-        timestamp: new Date()
-      };
+      if (response.data?.improvements) {
+        const improvements = {
+          id: Date.now() + 2,
+          text: response.data.improvements || "I'm sorry, I couldn't process your request at the moment.",
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botMessage, improvements]);
+      } else {
+        setMessages(prev => [...prev, botMessage]);
+      }
 
-      setMessages(prev => [...prev, errorMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      if(axios.isAxiosError(error)){
+        const errorMessage = {
+          id: Date.now() + 1,
+          text: error.response!.data.message || "Could not handle this request at the moment",
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      }
     } finally {
       setIsTyping(false);
     }
@@ -94,46 +166,56 @@ const Chatbot = () => {
     sendMessage(inputMessage);
   };
 
+  const toggleChat = () => {
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      setShowQuickActions(true);
+    }
+  };
+
   return (
     <>
       {/* Chat Button */}
       {!isOpen && (
-        <div className="fixed bottom-4 right-4 z-50">
+        <div className="fixed bottom-6 right-6 z-50">
           <button
-            onClick={() => setIsOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg"
+            onClick={toggleChat}
+            className="group bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-full p-4 shadow-lg transform transition-all duration-300 hover:scale-110"
           >
-            <Bot size={24} />
+            <MessageCircle size={24} className="group-hover:animate-pulse" />
           </button>
         </div>
       )}
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-4 right-4 z-50 w-80 h-96 bg-white border border-gray-300 rounded-lg shadow-lg flex flex-col">
+        <div className="fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="bg-blue-600 text-white p-3 rounded-t-lg flex justify-between items-center">
-            <span className="font-medium">Chat</span>
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <Bot size={20} />
+              <span className="font-semibold">IncognitoFeedback Assistant</span>
+            </div>
             <button
-              onClick={() => setIsOpen(false)}
-              className="hover:bg-blue-700 p-1 rounded"
+              onClick={toggleChat}
+              className="hover:bg-white/10 p-2 rounded-full transition-colors"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50">
+          {/* Messages Container */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 min-h-0">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
+                  className={`max-w-xs px-4 py-3 rounded-2xl text-sm shadow-sm ${
                     message.sender === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white border border-gray-200'
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
+                      : 'bg-white border border-gray-200 text-gray-800'
                   }`}
                 >
                   {message.text}
@@ -143,7 +225,7 @@ const Chatbot = () => {
             
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-white border border-gray-200 px-3 py-2 rounded-lg">
+                <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -152,29 +234,74 @@ const Chatbot = () => {
                 </div>
               </div>
             )}
+
+            {/* Quick Actions */}
+            {showQuickActions && messages.length <= 1 && (
+              <div className="space-y-3 mt-4">
+                <div className="text-center">
+                  <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border">
+                    Choose an action to get started
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {quickActions.map((action) => {
+                    const IconComponent = action.icon;
+                    return (
+                      <button
+                        key={action.id}
+                        onClick={() => handleQuickAction(action.template)}
+                        className={`${action.color} text-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105`}
+                      >
+                        <div className="flex flex-col items-center space-y-1">
+                          <IconComponent size={20} />
+                          <span className="text-xs font-medium">{action.title}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-500 px-2">
+                    💡 Tip: Replace text in [brackets] with your specific information
+                  </p>
+                </div>
+              </div>
+            )}
             
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <div className="p-3 border-t border-gray-200 bg-white rounded-b-lg">
-            <div className="flex space-x-2">
+          {/* Input Area */}
+          <div className="p-4 border-t border-gray-200 bg-white">
+            <div className="flex space-x-3">
               <input
+                id="chat-input"
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
-                placeholder="Type a message..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                placeholder="Type your message or use quick actions above..."
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                disabled={isTyping}
               />
               <button
                 onClick={handleSubmit}
                 disabled={!inputMessage.trim() || isTyping}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg"
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-400 text-white px-4 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100"
               >
                 <Send size={16} />
               </button>
             </div>
+            {showQuickActions && (
+              <div className="mt-2 text-center">
+                <button
+                  onClick={() => setShowQuickActions(false)}
+                  className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  Hide quick actions
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -183,6 +310,208 @@ const Chatbot = () => {
 };
 
 export default Chatbot;
+
+// "use client"
+
+// import React, { useState, useRef, useEffect } from 'react';
+// import { Send, X, Bot } from 'lucide-react';
+// import axios from 'axios';
+// import {useRouter} from "next/navigation"
+
+// const Chatbot = () => {
+//   const router = useRouter();
+//   const [isOpen, setIsOpen] = useState(false);
+//   const [messages, setMessages] = useState([
+//     {
+//       id: 1,
+//       text: "Hello! I'm your AI assistant. How can I help you today?",
+//       sender: 'bot',
+//       timestamp: new Date()
+//     }
+//   ]);
+//   const [inputMessage, setInputMessage] = useState('');
+//   const [isTyping, setIsTyping] = useState(false);
+//   const messagesEndRef = useRef(null);
+
+//   const scrollToBottom = () => {
+//     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+//   };
+
+//   useEffect(() => {
+//     scrollToBottom();
+//   }, [messages]);
+
+//   const sendMessage = async (messageText:string) => {
+//     if (!messageText.trim()) return;
+//     console.log('messageText = '+messageText);
+    
+//     const userMessage = {
+//       id: Date.now(),
+//       text: messageText,
+//       sender: 'user',
+//       timestamp: new Date()
+//     };
+
+//     setMessages(prev => [...prev, userMessage]);
+//     setInputMessage('');
+//     setIsTyping(true);
+
+//     try {
+
+        
+//       const {data:response} = await axios.post('/api/ai/chat/cohere', {
+//         userMessage: messageText,
+//       });
+
+//       if (!response) {
+//         throw new Error('Failed to send message');
+//       }
+
+//       console.log('resposne received : '+JSON.stringify(response));
+      
+//       if(response.data?.redirectUrl){
+//         console.log("redirecting...")
+//         setTimeout(()=>{
+//           router.push(response.data.redirectUrl)
+//         },0)
+//       }
+
+//       const botMessage = {
+//         id: Date.now() + 1,
+//         text: response.message || "I'm sorry, I couldn't process your request at the moment.",
+//         sender: 'bot',
+//         timestamp: new Date()
+//       };
+
+//       if(response.data?.improvements){
+
+//         const improvements = {
+//           id: Date.now() + 1,
+//           text: response.message.improvements || "I'm sorry, I couldn't process your request at the moment.",
+//           sender: 'bot',
+//           timestamp: new Date()
+//         };
+
+//         setMessages(prev => [...prev, botMessage,improvements]);
+
+//       } else {
+//         setMessages(prev => [...prev, botMessage]);
+//       }
+
+//     } catch (error) {
+//       if(axios.isAxiosError(error)){
+//         console.error('Error sending message:', JSON.stringify(error!.response!.data));
+//       }
+
+//       if(axios.isAxiosError(error)){
+//         const errorMessage = {
+//           id: Date.now() + 1,
+//           text:error.response!.data.message! || "Could handle this request at the moment",
+//           sender: 'bot',
+//           timestamp: new Date()
+//         };
+  
+//         setMessages(prev => [...prev, errorMessage]);
+//       }
+//     } finally {
+//       setIsTyping(false);
+//     }
+//   };
+
+//   const handleSubmit = (e) => {
+//     e.preventDefault();
+//     sendMessage(inputMessage);
+//   };
+
+//   return (
+//     <>
+//       {/* Chat Button */}
+//       {!isOpen && (
+//         <div className="fixed bottom-4 right-4 z-50">
+//           <button
+//             onClick={() => setIsOpen(true)}
+//             className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg"
+//           >
+//             <Bot size={24} />
+//           </button>
+//         </div>
+//       )}
+
+//       {/* Chat Window */}
+//       {isOpen && (
+//         <div className="fixed bottom-4 right-4 z-50 w-80 h-96 bg-white border border-gray-300 rounded-lg shadow-lg flex flex-col">
+//           {/* Header */}
+//           <div className="bg-blue-600 text-white p-3 rounded-t-lg flex justify-between items-center">
+//             <span className="font-medium">Chat</span>
+//             <button
+//               onClick={() => setIsOpen(false)}
+//               className="hover:bg-blue-700 p-1 rounded"
+//             >
+//               <X size={16} />
+//             </button>
+//           </div>
+
+//           {/* Messages */}
+//           <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50">
+//             {messages.map((message) => (
+//               <div
+//                 key={message.id}
+//                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+//               >
+//                 <div
+//                   className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
+//                     message.sender === 'user'
+//                       ? 'bg-blue-600 text-white'
+//                       : 'bg-white border border-gray-200'
+//                   }`}
+//                 >
+//                   {message.text}
+//                 </div>
+//               </div>
+//             ))}
+            
+//             {isTyping && (
+//               <div className="flex justify-start">
+//                 <div className="bg-white border border-gray-200 px-3 py-2 rounded-lg">
+//                   <div className="flex space-x-1">
+//                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+//                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+//                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+//                   </div>
+//                 </div>
+//               </div>
+//             )}
+            
+//             <div ref={messagesEndRef} />
+//           </div>
+
+//           {/* Input */}
+//           <div className="p-3 border-t border-gray-200 bg-white rounded-b-lg">
+//             <div className="flex space-x-2">
+//               <input
+//                 type="text"
+//                 value={inputMessage}
+//                 onChange={(e) => setInputMessage(e.target.value)}
+//                 onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
+//                 placeholder="Type a message..."
+//                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+//               />
+//               <button
+//                 onClick={handleSubmit}
+//                 disabled={!inputMessage.trim() || isTyping}
+//                 className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg"
+//               >
+//                 <Send size={16} />
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </>
+//   );
+// };
+
+// export default Chatbot;
 
 // "use client"
 // import React, { useState, useRef, useEffect } from 'react';

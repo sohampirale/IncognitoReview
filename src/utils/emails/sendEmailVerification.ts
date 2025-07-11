@@ -1,4 +1,4 @@
-import { IUser,User } from "@/models";
+import { IUser } from "@/models";
 import randomOTPGenerator from "../randomOTPGenerator";
 import resend from "@/lib/resend";
 import EmailVerification from "../../../emails/EmailVerification";
@@ -19,7 +19,7 @@ async function sendEmailVerification(user:IUser){
         user.verifyCodeExpiry=new Date(Date.now() + 1000*60*5);
         await user.save();
 
-        const {data,error} = await resend.emails.send({
+        const {error} = await resend.emails.send({
             from:'onboarding@resend.dev',
             to:[user.email],
             subject:"Email Confirmation Mail on Incognito Feedback",
@@ -46,7 +46,8 @@ async function sendEmailVerification(user:IUser){
         return {
             message:"Failed to send email",
             success:false,
-            status:500
+            status:500,
+            error
         }
     }
 }

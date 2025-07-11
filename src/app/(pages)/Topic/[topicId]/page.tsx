@@ -4,8 +4,8 @@ import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 import Topic from "@/Components/Topic/Topic";
 
-export default async function TopicPage({ params }: { params: { topicId: string } }){
-    const topicId = params.topicId;
+export default async function TopicPage({ params }: { params: Promise<{ topicId: string }> }){
+    const { topicId } = await params;  // ← This line changed
 
     const topic = await getOneTopic(topicId);
     console.log('topic fetched : '+JSON.stringify(topic));
@@ -40,7 +40,6 @@ export default async function TopicPage({ params }: { params: { topicId: string 
         </div>
     );
 }
-
 // import { authOptions } from "@/app/api/auth";
 // import getOneTopic from "@/lib/getOneTopic";
 // import { getServerSession } from "next-auth";

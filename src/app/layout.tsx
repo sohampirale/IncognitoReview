@@ -39,7 +39,6 @@ export default function RootLayout({
             </div>
                      
             <div className="w-full">
-              <IncognitoWelcomePopup/>
               {children}
             </div>
                      
